@@ -9,11 +9,7 @@ library(indicspecies)
 library(reshape2)
 
 # load data
-composition <- read.csv("Data/GoM_data_2005_to_2017_Formated.csv", head = T, stringsAsFactors = F)
-
-# fix data error
-composition$ACF[composition$ACF == "0..35"] <- 0.35
-composition$ACF <- as.numeric(composition$ACF)
+composition <- read.csv("Data/GoM_data_2005_to_2017_Checked.csv", head = T, stringsAsFactors = F)
 
 # by grouped time period
 composition$group <- ifelse(composition$Year <= 2009, 1, NA)

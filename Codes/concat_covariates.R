@@ -58,40 +58,28 @@ community_composition2 <- data.frame("Island" = unique(community_composition$Isl
 for (i in years){
   x <- subset(community_composition, Year == i)
   y <- x[3:14]
-  x$diversity <- diversity(y, "simpson")
-  colnames(x)[3:15] <- paste0(i, "_", colnames(x)[3:15])
-  community_composition2 <- merge(community_composition2, data.frame(x[,c(1,3:15)]), by="Island")
+  community_composition2$x <- diversity(y, "simpson")
+  colnames(community_composition2)[ncol(community_composition2)] <- paste0("diversity_", i)
 }
   
 # bleaching
-# bleaching$total_bleached <- rowSums(bleaching[,c("ACB_Bleached", "ACT_Bleached",
-#                                                  "ACD_Bleached", "ACF_Bleached", "ACE_Bleached", 
-#                                                  "CM_Bleached", "CS_Bleached", "CB_Bleached", 
-#                                                  "CF_Bleached", "CE_Bleached")])
+bleaching$total_bleached <- rowSums(bleaching[,c("ACB_Bleached", "ACT_Bleached",
+                                                 "ACD_Bleached", "ACF_Bleached", "ACE_Bleached",
+                                                 "CM_Bleached", "CS_Bleached", "CB_Bleached",
+                                                 "CF_Bleached", "CE_Bleached")])
 bleaching_composition <- bleaching %>%
   group_by(Island, Year) %>%
-  summarize_all(funs(mean))
+  summarize(average_bleaching = mean(total_bleached)) %>%
+  spread(key = Year, value = average_bleaching)
 
-bleaching_composition <- bleaching_composition[,c("Island", "Year", "ACB_Bleached", "ACT_Bleached",
-                                                  "ACD_Bleached", "ACF_Bleached", "ACE_Bleached", 
-                                                  "CM_Bleached", "CS_Bleached", "CB_Bleached", 
-                                                  "CF_Bleached", "CE_Bleached")]
-
-years2 <- c(2010, 2016)
-bleaching_composition2 <- data.frame("Island" = unique(bleaching_composition$Island))
-
-for (j in years2){
-  x <- subset(bleaching_composition, Year == j)
-  colnames(x)[3:12] <- paste0(j, "_", colnames(x)[3:12])
-  bleaching_composition2 <- merge(bleaching_composition2, data.frame(x[,c(1,3:12)]), by="Island")
-}
+colnames(bleaching_composition)[2:3] <- paste0("Mean_bleaching_", colnames(bleaching_composition)[2:3])
 
 # concatenate all covariates
 covariates_final <- covariates %>% 
   left_join(chla_max_wide, by="Island") %>%
   left_join(dhw_max_wide, by="Island") %>%
   left_join(community_composition2, by="Island") %>%
-  left_join(bleaching_composition2, by="Island")
+  left_join(bleaching_composition, by="Island")
 
 # save data
 write.csv(covariates_final, "Data/concatenated_covariates.csv", row.names=F)

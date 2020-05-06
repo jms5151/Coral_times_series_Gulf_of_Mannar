@@ -58,11 +58,11 @@ CB_cov <- composition %>%
   mutate(post_CB_cov = lag(average_CB_cov), delta_CB_cov = post_CB_cov - average_CB_cov) %>%
   filter(Bleaching_split_2016 == "pre-2016")
 
-# CE cover
-CE_cov <- composition %>%
+# ACT cover
+ACT_cov <- composition %>%
   group_by(Island, Bleaching_split_2016) %>%
-  summarize(average_CE_cov = mean(CE)) %>%
-  mutate(post_CE_cov = lag(average_CE_cov), delta_CE_cov = post_CE_cov - average_CE_cov) %>%
+  summarize(average_ACT_cov = mean(ACT)) %>%
+  mutate(post_ACT_cov = lag(average_ACT_cov), delta_ACT_cov = post_ACT_cov - average_ACT_cov) %>%
   filter(Bleaching_split_2016 == "pre-2016")
 
 # ACD cover

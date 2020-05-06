@@ -12,9 +12,9 @@ library(reshape2)
 composition <- read.csv("Data/GoM_data_2005_to_2017_Checked.csv", head = T, stringsAsFactors = F)
 
 # by grouped time period
-composition$group <- ifelse(composition$Year <= 2009, 1, NA)
-composition$group <- ifelse(composition$Year > 2009 & composition$Year <=2015, 2, composition$group)
-composition$group <- ifelse(composition$Year > 2015, 3, composition$group)
+composition$group <- ifelse(composition$Year <= 2009, "2005-2009", NA)
+composition$group <- ifelse(composition$Year > 2009 & composition$Year <=2015, "2010-2015", composition$group)
+composition$group <- ifelse(composition$Year > 2015, "2016-2017", composition$group)
 
 # aggregate by island & year
 island_year_df <- composition[,c(3,21,5:20)]
@@ -59,8 +59,8 @@ sub_pc_m = melt(sub_pc, id = "group")
 ggplot(sub_pc_m, aes(x = variable, y = value, fill = as.factor(group))) + 
   geom_boxplot(colour = "black", position = position_dodge(0.5)) +
   geom_vline(xintercept = c(1.5,5.5), colour = "grey85", size = 1.2) +
-  theme(legend.title = element_text(size = 12, face = "bold"), 
-        legend.text = element_text(size = 10, face = "bold"), legend.position = "right", 
+  theme(legend.title = element_blank(), 
+        legend.text = element_text(size = 10, face = "bold"), legend.position = "right",
         axis.text.x = element_text(face = "bold",colour = "black", size = 12), 
         axis.text.y = element_text(face = "bold", size = 12, colour = "black"), 
         axis.title.y = element_text(face = "bold", size = 14, colour = "black"), 
@@ -68,11 +68,8 @@ ggplot(sub_pc_m, aes(x = variable, y = value, fill = as.factor(group))) +
         panel.border = element_rect(fill = NA, colour = "black"), 
         legend.key=element_blank()) + 
   labs(x= "", y = "Relative Abundance (%)", fill = "group") + 
-  scale_fill_manual(values = c("steelblue2", "steelblue4", "blue")) +
-  geom_text(x=1, y=70, label="Group 1") +
-  geom_text(x=1, y=66, label="2005-2009") +
-  geom_text(x=3.5, y=70, label="Group 3") +
-  geom_text(x=3.5, y=66, label="2016-2017") +
-  geom_text(x=9, y=70, label="Group 1+2") +
-  geom_text(x=9, y=66, label="2005-2015") 
+  scale_fill_manual(values = c("grey90", "lightblue", "orange")) +
+  geom_text(x=0.95, y=70, label="2005-2009") +
+  geom_text(x=3.5, y=70, label="2016-2017") +
+  geom_text(x=9, y=70, label="2005-2015") 
   

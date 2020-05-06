@@ -2,7 +2,6 @@
 rm(list=ls()) #remove previous variable assignments
 
 # load libraries
-library(RCurl)
 library(raster)
 library(ncdf4)
 library(tidyverse)

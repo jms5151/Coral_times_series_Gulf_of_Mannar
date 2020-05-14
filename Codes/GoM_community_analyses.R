@@ -68,8 +68,8 @@ ggplot(sub_pc_m, aes(x = variable, y = value, fill = as.factor(group))) +
         panel.border = element_rect(fill = NA, colour = "black"), 
         legend.key=element_blank()) + 
   labs(x= "", y = "Relative Abundance (%)", fill = "group") + 
-  scale_fill_manual(values = c("grey90", "lightblue", "orange")) +
-  geom_text(x=0.95, y=70, label="2005-2009") +
-  geom_text(x=3.5, y=70, label="2016-2017") +
-  geom_text(x=9, y=70, label="2005-2015") 
+  scale_fill_manual(values = c("grey90", "lightblue", "orange")) #+
+  # geom_text(x=0.95, y=70, label="2005-2009") +
+  # geom_text(x=3.5, y=70, label="2016-2017") +
+  # geom_text(x=9, y=70, label="2005-2015") 
   

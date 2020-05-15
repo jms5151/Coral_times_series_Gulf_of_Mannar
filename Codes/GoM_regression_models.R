@@ -2,111 +2,161 @@
 rm(list=ls()) #remove previous variable assignments
 
 # load libraries
-library(ggplot2)
-library(tidyverse)
-library(car)
-library(MASS)
 library(betareg)
 
 # load data
 covariates <- read.csv("Data/concatenated_covariates.csv", head = T)
 source("Codes/format_response_vars.R")
 
-# format bleaching and chl covariates
-bleaching1_covariates <- covariates[, grepl("Island|2009|2010", names(covariates))]
-bleaching1_covariates$Year <- 2010
-colnames(bleaching1_covariates) <- gsub("_2009|_2010", "", colnames(bleaching1_covariates))
-
-bleaching2_covariates <- covariates[, grepl("Island|2015|2016", names(covariates))]
-bleaching2_covariates$Year <- 2016
-colnames(bleaching2_covariates) <- gsub("_2015|_2016", "", colnames(bleaching2_covariates))
-
-bleaching_covariates <- rbind(bleaching1_covariates, bleaching2_covariates)
-colnames(bleaching_covariates)[4:5] <- c("pre_bleaching_diversity", "post_bleaching_diversity") 
-
-bleaching_scaled_covariates <- bleaching_covariates
-bleaching_scaled_covariates[,c(2:6)] <- lapply(bleaching_scaled_covariates[,c(2:6)], scale)
-
 # center, scale, and/or covariates
 scaled_covariates <- covariates
 scaled_covariates$Pop10k_decay <- log(scaled_covariates$Pop10k_decay)
 scaled_covariates[,c(2,3,5:7,9:19)] <- lapply(scaled_covariates[,c(2,3,5:7,9:19)], scale)
 
-# coral mortality -------------------------------------------------
-ccov_mortality <- merge(ccov_mortality, scaled_covariates[,c(1:9)], by = "Island")
-ccov_mortality <- merge(ccov_mortality, bleaching_scaled_covariates, by = c("Island", "Year"))
+# coral mortality 2010 -------------------------------------------------
+ccov_mortality_2010 <- merge(ccov_mortality_2010, scaled_covariates, by = "Island")
+ccov_mortality_2010$delta_ccov_beta <- (ccov_mortality_2010$delta_ccov+100)/200
 
 # VIF for full model
-full_mod_ccov_mortality <- lm(delta_ccov ~ Sedimentation_rate 
+full_mod_ccov_mortality_2010 <- betareg(delta_ccov_beta ~ Sedimentation_rate 
                     + Fish_density 
                     # + Ocean_pollution
                     + water_clarity 
                     + Pop10k_decay 
-                    + inorganics
-                    + MMM_Chla
-                    + Max_DHW
-                    + pre_bleaching_diversity
-                    + Mean_bleaching
-                    , data = ccov_mortality)
+                    # + inorganics
+                    + MMM_Chla_2010
+                    + Max_DHW_2010
+                    + diversity_2009
+                    + Mean_bleaching_2010
+                    , data = ccov_mortality_2010)
 
-sort(vif(full_mod_ccov_mortality))
+sort(vif(full_mod_ccov_mortality_2010))
 
-# model selection
-ccov_mod_mortality_select <- stepAIC(full_mod_ccov_mortality, direction = 'backward')
-summary(ccov_mod_mortality_select)
+# final model
+ccov_mortality_2010_select <- betareg(delta_ccov_beta ~ Fish_density + MMM_Chla_2010 + Max_DHW_2010 + Mean_bleaching_2010, data = ccov_mortality_2010)
+summary(ccov_mortality_2010_select)
 
-# coral recovery -------------------------------------------------
-ccov_recovery <- merge(ccov_recovery, scaled_covariates[,c(1:9)], by = "Island")
-ccov_recovery$Year <- ifelse(ccov_recovery$Year == 2011, 2010, 2016)
-ccov_recovery <- merge(ccov_recovery, bleaching_scaled_covariates, by = c("Island", "Year"))
+# coral mortality 2016 -------------------------------------------------
+ccov_mortality_2016 <- merge(ccov_mortality_2016, scaled_covariates, by = "Island")
+ccov_mortality_2016$delta_ccov_beta <- (ccov_mortality_2016$delta_ccov+100)/200
 
 # VIF for full model
-full_mod_ccov_recovery <- lm(delta_ccov ~ Sedimentation_rate 
+full_mod_ccov_mortality_2016 <- betareg(delta_ccov_beta ~ Sedimentation_rate 
+                              + Fish_density 
+                              # + Ocean_pollution
+                              + water_clarity 
+                              + Pop10k_decay 
+                              # + inorganics
+                              + MMM_Chla_2016
+                              + Max_DHW_2016
+                              + diversity_2015
+                              + Mean_bleaching_2016
+                              , data = ccov_mortality_2016)
+
+sort(vif(full_mod_ccov_mortality_2016))
+
+# final model
+ccov_mortality_2016_select <- betareg(delta_ccov_beta ~ MMM_Chla_2016 + Max_DHW_2016, data = ccov_mortality_2016)
+summary(ccov_mortality_2016_select)
+
+# coral recovery 2011 -------------------------------------------------
+ccov_recovery_2011 <- merge(ccov_recovery_2011, scaled_covariates, by = "Island")
+ccov_recovery_2011$delta_ccov_beta <- (ccov_recovery_2011$delta_ccov+100)/200
+
+# VIF for full model
+full_mod_ccov_recovery_2011 <- betareg(delta_ccov_beta ~ Sedimentation_rate 
                     + Fish_density 
                     # + Ocean_pollution
                     + water_clarity 
                     + Pop10k_decay 
-                    + inorganics
-                    + MMM_Chla
-                    + Max_DHW
-                    + pre_bleaching_diversity
-                    + Mean_bleaching
-                    , data = ccov_recovery)
+                    # + inorganics
+                    + MMM_Chla_2010
+                    + Max_DHW_2010
+                    + diversity_2009
+                    + Mean_bleaching_2010
+                    , data = ccov_recovery_2011)
 
-sort(vif(full_mod_ccov_recovery))
+sort(vif(full_mod_ccov_recovery_2011))
 
-# model selection
-ccov_mod_recovery_select <- stepAIC(full_mod_ccov_recovery, direction = 'backward')
-summary(ccov_mod_recovery_select)
+# final model
+ccov_recovery_2011_select <- betareg(delta_ccov_beta ~ diversity_2009 + Mean_bleaching_2010, data = ccov_recovery_2011)
+summary(ccov_recovery_2011_select)
 
-# Algae "recovery" ------------------------------------------------------
-Algae_recovery <- merge(Algae_recovery, scaled_covariates, by = "Island")
-Algae_recovery <- merge(Algae_recovery, bleaching_scaled_covariates, by = c("Island", "Year"))
+# coral recovery 2017 -------------------------------------------------
+ccov_recovery_2017 <- merge(ccov_recovery_2017, scaled_covariates, by = "Island")
+ccov_recovery_2017$delta_ccov_beta <- (ccov_recovery_2017$delta_ccov+100)/200
 
 # VIF for full model
-full_mod_Algae_recovery <- lm(delta_algae_cov ~ Sedimentation_rate 
+full_mod_ccov_recovery_2017 <- betareg(delta_ccov_beta ~ Sedimentation_rate 
+                             + Fish_density 
+                             # + Ocean_pollution
+                             + water_clarity 
+                             + Pop10k_decay 
+                             # + inorganics
+                             + MMM_Chla_2016
+                             + Max_DHW_2016
+                             + diversity_2015
+                             + Mean_bleaching_2016
+                             , data = ccov_recovery_2017)
+
+sort(vif(full_mod_ccov_recovery_2017))
+
+# final model
+ccov_recovery_2017_select <- betareg(delta_ccov_beta ~ Sedimentation_rate + Fish_density + Pop10k_decay + MMM_Chla_2016 + Max_DHW_2016 + Mean_bleaching_2016, data = ccov_recovery_2017)
+summary(ccov_recovery_2017_select)
+
+# Algae "recovery" 2010 ------------------------------------------------------
+Algae_recovery_2010 <- merge(Algae_recovery_2010, scaled_covariates, by = "Island")
+Algae_recovery_2010$delta_algae_cov_beta <- (Algae_recovery_2010$delta_algae_cov+100)/200
+
+# VIF for full model
+full_mod_Algae_recovery_2010 <- betareg(delta_algae_cov_beta ~ Sedimentation_rate 
                           + Fish_density 
                           # + Ocean_pollution
                           + water_clarity 
                           + Pop10k_decay 
-                          + inorganics
-                          + MMM_Chla
-                          + Max_DHW
-                          + pre_bleaching_diversity
-                          + Mean_bleaching
-                          , data = Algae_recovery)
+                          # + inorganics
+                          + MMM_Chla_2010
+                          + Max_DHW_2010
+                          + diversity_2009
+                          + Mean_bleaching_2010
+                          , data = Algae_recovery_2010)
 
-sort(vif(full_mod_Algae_recovery))
+sort(vif(full_mod_Algae_recovery_2010))
 
-# model selection
-Algae_recovery_mod_select <- stepAIC(full_mod_Algae_recovery, direction = 'backward')
-summary(Algae_recovery_mod_select)
+# final model
+Algae_recovery_2010_select <- betareg(delta_algae_cov_beta ~ Sedimentation_rate + diversity_2009, data = Algae_recovery_2010)
+summary(Algae_recovery_2010_select)
+
+# Algae "recovery" 2016 ------------------------------------------------------
+Algae_recovery_2016 <- merge(Algae_recovery_2016, scaled_covariates, by = "Island")
+Algae_recovery_2016$delta_algae_cov_beta <- (Algae_recovery_2016$delta_algae_cov+100)/200
+
+# VIF for full model
+full_mod_Algae_recovery_2016 <- betareg(delta_algae_cov_beta ~ Sedimentation_rate 
+                                   + Fish_density 
+                                   # + Ocean_pollution
+                                   + water_clarity 
+                                   + Pop10k_decay 
+                                   # + inorganics
+                                   + MMM_Chla_2016
+                                   + Max_DHW_2016
+                                   + diversity_2015
+                                   + Mean_bleaching_2016
+                                   , data = Algae_recovery_2016)
+
+sort(vif(full_mod_Algae_recovery_2016))
+
+# final model
+Algae_recovery_2016_select <- betareg(delta_algae_cov_beta ~ Pop10k_decay + Max_DHW_2016 + diversity_2015, data = Algae_recovery_2016)
+summary(Algae_recovery_2016_select)
 
 # Soft coral ---------------------------------------------------
 soft_coral <- merge(soft_cov, scaled_covariates, by = "Island")
+soft_coral$delta_soft_cov_beta <- (soft_coral$delta_soft_cov+100)/200
 
 # VIF for full model
-full_mod_Algae_recovery <- lm(delta_soft_cov ~ Sedimentation_rate 
+full_mod_soft_coral <- betareg(delta_soft_cov_beta ~ Sedimentation_rate 
                              + Fish_density
                              # + Ocean_pollution
                              + water_clarity 
@@ -118,17 +168,18 @@ full_mod_Algae_recovery <- lm(delta_soft_cov ~ Sedimentation_rate
                              + Mean_bleaching_2010
                              , data = soft_coral)
 
-sort(vif(full_mod_Algae_recovery))
+sort(vif(full_mod_soft_coral))
 
-# model selection
-Algae_recovery_mod_select <- stepAIC(full_mod_Algae_recovery, direction = 'backward')
-summary(Algae_recovery_mod_select)
+# final model
+soft_coral_select <- betareg(delta_soft_cov_beta ~ Fish_density + water_clarity + Mean_bleaching_2010, data = soft_coral)
+summary(soft_coral_select)
 
 # ACE -------------------------------------------------------------
 ACE <- merge(ACE_cov, scaled_covariates, by = "Island")
+ACE$delta_ACE_cov_beta <- (ACE$delta_ACE_cov+100)/200
 
 # VIF for full model
-full_mod_ACE <- lm(delta_ACE_cov ~ Sedimentation_rate 
+full_mod_ACE <- betareg(delta_ACE_cov_beta ~ Sedimentation_rate 
                           + Fish_density 
                           # + Ocean_pollution
                           + water_clarity
@@ -142,15 +193,16 @@ full_mod_ACE <- lm(delta_ACE_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_ACE))
 
-# model selection
-ACE_mod_select <- stepAIC(full_mod_ACE, direction = 'backward')
-summary(ACE_mod_select)
+# final model
+ACE_select <- betareg(delta_ACE_cov_beta ~ water_clarity + Pop10k_decay + Max_DHW_2016 + diversity_2015 + Mean_bleaching_2016, data = ACE)
+summary(ACE_select)
 
 # Algae -------------------------------------------------------------
 algae <- merge(Algae_cov, scaled_covariates, by = "Island")
+algae$delta_algae_cov_beta <- (algae$delta_algae_cov+100)/200
 
 # VIF for full model
-full_mod_algae <- lm(delta_algae_cov ~ Sedimentation_rate 
+full_mod_algae <- betareg(delta_algae_cov_beta ~ Sedimentation_rate 
                    + Fish_density 
                    # + Ocean_pollution
                    + water_clarity
@@ -164,15 +216,16 @@ full_mod_algae <- lm(delta_algae_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_algae))
 
-# model selection
-algae_mod_select <- stepAIC(full_mod_algae, direction = 'backward')
-summary(algae_mod_select)
+# final model
+algae_select <- betareg(delta_algae_cov_beta ~ water_clarity + Pop10k_decay + Max_DHW_2016 + diversity_2015, data = algae)
+summary(algae_select)
 
 # CCA -------------------------------------------------------------
 CCA <- merge(CCA_cov, scaled_covariates, by = "Island")
+CCA$delta_CCA_cov_beta <- (CCA$delta_CCA_cov+100)/200
 
 # VIF for full model
-full_mod_CCA <- lm(delta_CCA_cov ~ Sedimentation_rate 
+full_mod_CCA <- betareg(delta_CCA_cov_beta ~ Sedimentation_rate 
                      + Fish_density 
                      # + Ocean_pollution
                      + water_clarity
@@ -186,15 +239,16 @@ full_mod_CCA <- lm(delta_CCA_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_CCA))
 
-# model selection
-CCA_mod_select <- stepAIC(full_mod_CCA, direction = 'backward')
-summary(CCA_mod_select)
+# final model
+CCA_select <- betareg(delta_CCA_cov_beta ~ 1, data = CCA)
+summary(CCA_select)
 
 # CS -------------------------------------------------------------
 CS <- merge(CS_cov, scaled_covariates, by = "Island")
+CS$delta_CS_cov_beta <- (CS$delta_CS_cov+100)/200
 
 # VIF for full model
-full_mod_CS <- lm(delta_CS_cov ~ Sedimentation_rate 
+full_mod_CS <- betareg(delta_CS_cov_beta ~ Sedimentation_rate 
                    + Fish_density 
                    # + Ocean_pollution
                    + water_clarity
@@ -208,15 +262,16 @@ full_mod_CS <- lm(delta_CS_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_CS))
 
-# model selection
-CS_mod_select <- stepAIC(full_mod_CS, direction = 'backward')
-summary(CS_mod_select)
+# final model
+CS_select <- betareg(delta_CS_cov_beta ~ Sedimentation_rate + Fish_density + water_clarity, data = CS)
+summary(CS_select)
 
 # CB -------------------------------------------------------------
 CB <- merge(CB_cov, scaled_covariates, by = "Island")
+CB$delta_CB_cov_beta <- (CB$delta_CB_cov+100)/200
 
 # VIF for full model
-full_mod_CB <- lm(delta_CB_cov ~ Sedimentation_rate 
+full_mod_CB <- betareg(delta_CB_cov_beta ~ Sedimentation_rate 
                   + Fish_density 
                   # + Ocean_pollution
                   + water_clarity
@@ -230,15 +285,16 @@ full_mod_CB <- lm(delta_CB_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_CB))
 
-# model selection
-CB_mod_select <- stepAIC(full_mod_CB, direction = 'backward')
-summary(CB_mod_select)
+# final model
+CB_select <- betareg(delta_CB_cov_beta ~ Sedimentation_rate + Fish_density + water_clarity + Pop10k_decay + MMM_Chla_2016 + diversity_2015, data = CB)
+summary(CB_select)
 
 # ACT -------------------------------------------------------------
 ACT <- merge(ACT_cov, scaled_covariates, by = "Island")
+ACT$delta_ACT_cov_beta <- (ACT$delta_ACT_cov+100)/200
 
 # VIF for full model
-full_mod_ACT <- lm(delta_ACT_cov ~ Sedimentation_rate 
+full_mod_ACT <- betareg(delta_ACT_cov_beta ~ Sedimentation_rate 
                   + Fish_density 
                   # + Ocean_pollution
                   + water_clarity
@@ -252,15 +308,16 @@ full_mod_ACT <- lm(delta_ACT_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_ACT))
 
-# model selection
-ACT_mod_select <- stepAIC(full_mod_ACT, direction = 'backward')
-summary(ACT_mod_select)
+# final model
+ACT_select <- betareg(delta_ACT_cov_beta ~ Sedimentation_rate + Fish_density + water_clarity + diversity_2015, data = ACT)
+summary(ACT_select)
 
 # ACD -------------------------------------------------------------
 ACD <- merge(ACD_cov, scaled_covariates, by = "Island")
+ACD$delta_ACD_cov_beta <- (ACD$delta_ACD_cov+100)/200
 
 # VIF for full model
-full_mod_ACD <- lm(delta_ACD_cov ~ Sedimentation_rate 
+full_mod_ACD <- betareg(delta_ACD_cov_beta ~ Sedimentation_rate 
                    + Fish_density 
                    # + Ocean_pollution
                    + water_clarity
@@ -274,15 +331,16 @@ full_mod_ACD <- lm(delta_ACD_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_ACD))
 
-# model selection
-ACD_mod_select <- stepAIC(full_mod_ACD, direction = 'backward')
-summary(ACD_mod_select)
+# final model
+ACD_select <- betareg(delta_ACD_cov_beta ~ Sedimentation_rate + Max_DHW_2016 + diversity_2015, data = ACD)
+summary(ACD_select)
 
 # CE -------------------------------------------------------------
 CE <- merge(CE_cov, scaled_covariates, by = "Island")
+CE$delta_CE_cov_beta <- (CE$delta_CE_cov+100)/200
 
 # VIF for full model
-full_mod_CE <- lm(delta_CE_cov ~ Sedimentation_rate 
+full_mod_CE <- betareg(delta_CE_cov_beta ~ Sedimentation_rate 
                    + Fish_density 
                    # + Ocean_pollution
                    + water_clarity
@@ -296,15 +354,16 @@ full_mod_CE <- lm(delta_CE_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_CE))
 
-# model selection
-CE_mod_select <- stepAIC(full_mod_CE, direction = 'backward')
-summary(CE_mod_select)
+# final model
+CE_select <- betareg(delta_CE_cov_beta ~ Sedimentation_rate + Pop10k_decay + Max_DHW_2016, data = CE)
+summary(CE_select)
 
 # CF -------------------------------------------------------------
 CF <- merge(CF_cov, scaled_covariates, by = "Island")
+CF$delta_CF_cov_beta <- (CF$delta_CF_cov+100)/200
 
 # VIF for full model
-full_mod_CF <- lm(delta_CF_cov ~ Sedimentation_rate 
+full_mod_CF <- betareg(delta_CF_cov_beta ~ Sedimentation_rate 
                   + Fish_density 
                   # + Ocean_pollution
                   + water_clarity
@@ -318,15 +377,16 @@ full_mod_CF <- lm(delta_CF_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_CF))
 
-# model selection
-CF_mod_select <- stepAIC(full_mod_CF, direction = 'backward')
-summary(CF_mod_select)
+# final model
+CF_select <- betareg(delta_CF_cov_beta ~ water_clarity + Pop10k_decay + MMM_Chla_2016 + Max_DHW_2016 + diversity_2015, data = CF)
+summary(CF_select)
 
 # ACB -------------------------------------------------------------
 ACB <- merge(ACB_cov, scaled_covariates, by = "Island")
+ACB$delta_ACB_cov_beta <- (ACB$delta_ACB_cov+100)/200
 
 # VIF for full model
-full_mod_ACB <- lm(delta_ACB_cov ~ Sedimentation_rate 
+full_mod_ACB <- betareg(delta_ACB_cov_beta ~ Sedimentation_rate 
                   + Fish_density 
                   # + Ocean_pollution
                   + water_clarity
@@ -340,15 +400,16 @@ full_mod_ACB <- lm(delta_ACB_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_ACB))
 
-# model selection
-ACB_mod_select <- stepAIC(full_mod_ACB, direction = 'backward')
-summary(ACB_mod_select)
+# final model
+ACB_select <- betareg(delta_ACB_cov_beta ~ Sedimentation_rate + Fish_density + Pop10k_decay + MMM_Chla_2016 + Max_DHW_2016, data = ACB)
+summary(ACB_select)
 
 # CM -------------------------------------------------------------
 CM <- merge(CM_cov, scaled_covariates, by = "Island")
+CM$delta_CM_cov_beta <- (CM$delta_CM_cov+100)/200
 
 # VIF for full model
-full_mod_CM <- lm(delta_CM_cov ~ Sedimentation_rate 
+full_mod_CM <- betareg(delta_CM_cov_beta ~ Sedimentation_rate 
                    + Fish_density 
                    # + Ocean_pollution
                    + water_clarity
@@ -362,7 +423,7 @@ full_mod_CM <- lm(delta_CM_cov ~ Sedimentation_rate
 
 sort(vif(full_mod_CM))
 
-# model selection
-CM_mod_select <- stepAIC(full_mod_CM, direction = 'backward')
-summary(CM_mod_select)
+# final model
+CM_select <- betareg(delta_CM_cov_beta ~ diversity_2015, data = CM)
+summary(CM_select)
 

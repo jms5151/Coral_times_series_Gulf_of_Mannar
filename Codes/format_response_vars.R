@@ -1,4 +1,6 @@
 # format composition data for regression models -------------------------
+# load library
+library(tidyverse)
 
 # load data
 composition <- read.csv("Data/GoM_data_2005_to_2017_Checked.csv", head = T)
@@ -13,21 +15,27 @@ composition$total_ccov <- rowSums(composition[,c("ACB", "CE", "ACD", "ACF", "ACE
 ccov_mortality <- composition %>%
   group_by(Island, Year) %>%
   summarize(average_total_ccov = mean(total_ccov)) %>%
-  mutate(prior_ccov = lag(average_total_ccov), delta_ccov = lag(average_total_ccov) - average_total_ccov) %>%
-  filter(Year == 2010 | Year == 2016)
+  mutate(prior_ccov = lag(average_total_ccov), delta_ccov = lag(average_total_ccov) - average_total_ccov)
+  
+ccov_mortality_2010 <- ccov_mortality %>% filter(Year == 2010)
+ccov_mortality_2016 <- ccov_mortality %>% filter(Year == 2016)
 
 ccov_recovery <- composition %>%
   group_by(Island, Year) %>%
   summarize(average_total_ccov = mean(total_ccov)) %>%
-  mutate(delta_ccov = average_total_ccov - lag(average_total_ccov)) %>%
-  filter(Year == 2011 | Year == 2017)
+  mutate(delta_ccov = average_total_ccov - lag(average_total_ccov)) 
+
+ccov_recovery_2011 <- ccov_recovery %>% filter(Year == 2011)
+ccov_recovery_2017 <- ccov_recovery %>% filter(Year == 2017)
 
 # algae recovery
 Algae_recovery <- composition %>%
   group_by(Island, Year) %>%
   summarize(average_algae_cov = mean(Algae)) %>%
-  mutate(delta_algae_cov = average_algae_cov - lag(average_algae_cov)) %>%
-  filter(Year == 2010 | Year == 2016)
+  mutate(delta_algae_cov = average_algae_cov - lag(average_algae_cov)) 
+
+Algae_recovery_2010 <- Algae_recovery %>% filter(Year == 2010) 
+Algae_recovery_2016 <- Algae_recovery %>% filter(Year == 2016) 
 
 # Soft cover
 soft_cov <- composition %>%

@@ -17,7 +17,7 @@ sst.df <- data.frame(matrix(ncol=3, nrow=0))
 colnames(sst.df) <- c("Island", "Year", "Max_DHW")
 write.csv(sst.df, newFileName, row.names = F)
 
-# extract daily temperature data for all sites from coralTemp and save in "sst_persian_gulf.csv"
+# extract daily temperature data for all sites from coralTemp
 ncFiles <- list.files("Data/DHW/")
 
 for (j in 1:length(ncFiles)){ 

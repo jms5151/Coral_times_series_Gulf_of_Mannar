@@ -14,70 +14,56 @@ gom_df <- merge(benthic_cover, covariates, by = c("LIT_Number", "Site_Number", "
 
 # center, scale, and/or transform covariates
 gom_df$Pop10k_decay <- log(gom_df$Pop10k_decay)
-covars <- c(
-            # "lagged_ACB", "lagged_ACT", "lagged_ACD", "lagged_ACF", "lagged_ACE", 
-            # "lagged_CM", "lagged_CS", "lagged_CB", "lagged_CF", "lagged_CE", 
-            "lagged_total_ccov", "lagged_prop_acroporid_cov",
-            "lagged_CCA", "lagged_Algae", "total_bleached", "water_clarity", 
-            "Pop10k_decay", "MMM_Chla", "inorganics", "Fish_density")
+# gom_df[,c("lagged_total_ccov", "lagged_Algae", "Fish_density")] <- lapply(gom_df[,c("lagged_total_ccov", "lagged_Algae", "Fish_density")], log)
+covars <- c("lagged_total_ccov", "lagged_Algae", "percent_bleached"
+            , "Pop10k_decay", "MMM_Chla", "inorganics", "Fish_density", "Max_DHW")
 gom_df[, covars] <- lapply(gom_df[, covars], scale)
 
 # subset
-mortality <- subset(gom_df, Year == 2010 | Year == 2016)
-recovery <- subset(gom_df, Year == 2011 | Year == 2017)
+benthic_change <- subset(gom_df, Year == 2010 | Year == 2016)
 
 # format response variables
-mortality$delta_ccov_beta <- ((mortality$delta_ccov * -1) + 100) / 200
-recovery$delta_ccov_beta <- (recovery$delta_ccov + 100) / 200
-recovery$delta_algae_beta <- (recovery$delta_algae + 100) / 200
+benthic_change$delta_ccov_beta <- (benthic_change$delta_ccov + 100) / 200 
+benthic_change$delta_algae_beta <- (benthic_change$delta_algae + 100) / 200
 
-# coral mortality model ---------------------------------------------------
-coral_mortality_mod <- glmmTMB(delta_ccov_beta ~ total_bleached
-                               + lagged_total_ccov
-                               + lagged_prop_acroporid_cov
-                               + lagged_CCA
-                               # + lagged_Algae
-                               + Fish_density
-                               ## + water_clarity
-                               # + Pop10k_decay
-                               + MMM_Chla
-                               # + inorganics
-                               + (1|Island/Site_Number/LIT_Number),
-                               data = mortality,
-                               beta_family(link = "logit"))
-
-summary(coral_mortality_mod)
-
-# coral recovery model ---------------------------------------------------
-coral_recovery_mod <- glmmTMB(delta_ccov_beta ~ total_bleached
-                              + lagged_total_ccov
-                              + lagged_prop_acroporid_cov
-                              # + lagged_CCA
-                              # + lagged_Algae
-                              + Fish_density
-                              ## + water_clarity
-                              # + Pop10k_decay
-                              # + MMM_Chla
-                              # + inorganics
-                              + (1|Island/Site_Number/LIT_Number),
-                               data = recovery,
-                               beta_family(link = "logit"))
-
-summary(coral_recovery_mod)
-
-# algal growth model ---------------------------------------------------
-algae_mod <- glmmTMB(delta_algae_beta ~ total_bleached
-                     # + lagged_total_ccov
-                     + lagged_prop_acroporid_cov
-                     # + lagged_CCA
-                     + lagged_Algae
+# coral model ---------------------------------------------------
+coral_mod <- glmmTMB(delta_ccov_beta ~ percent_bleached 
+                     # + Max_DHW
+                     + lagged_total_ccov
                      + Fish_density
-                     ## + water_clarity
+                     # + Pop10k_decay
+                     + MMM_Chla
+                     # + inorganics
+                     + (1|Island/Site_Number/LIT_Number),
+                     data = benthic_change,
+                     beta_family(link = "logit"))
+
+summary(coral_mod)
+
+# predict with model and compare with observations
+benthic_change$ypred <- predict(coral_mod, benthic_change)
+benthic_changeLm <- lm(benthic_change$ypred~benthic_change$delta_ccov_beta)
+plot(benthic_change$delta_ccov_beta, benthic_change$ypred, pch=16, xlab = "Observed", ylab = "Predicted", main = "Coral")
+abline(benthic_changeLm)
+legend("topleft", legend = bquote(italic(R)^2 == .(format(summary(benthic_changeLm)$r.squared, digits = 2))), bty = 'n') 
+
+# algae model ---------------------------------------------------
+algae_mod <- glmmTMB(delta_algae_beta ~ #percent_bleached
+                     + Max_DHW
+                     + lagged_Algae
+                     # + Fish_density
                      # + Pop10k_decay
                      + MMM_Chla
                      + inorganics
                      + (1|Island/Site_Number/LIT_Number),
-                     data = recovery,
+                     data = benthic_change,
                      beta_family(link = "logit"))
 
 summary(algae_mod)
+
+# predict with model and compare with observations
+benthic_change$ypred2 <- predict(algae_mod, benthic_change)
+benthic_changeLm2 <- lm(benthic_change$ypred2~benthic_change$delta_algae_beta)
+plot(benthic_change$delta_algae_beta, benthic_change$ypred2, pch=16, xlab = "Observed", ylab = "Predicted", main = "Algae")
+abline(benthic_changeLm2)
+legend("topleft", legend = bquote(italic(R)^2 == .(format(summary(benthic_changeLm2)$r.squared, digits = 2))), bty = 'n') 

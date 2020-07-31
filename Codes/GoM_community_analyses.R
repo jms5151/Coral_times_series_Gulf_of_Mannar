@@ -42,18 +42,20 @@ for (i in islands){
   ordihull(genera_comp_NMDS, groups = treat, draw = "polygon", col = c("grey90", "lightblue", "orange"), label=F)
 }
 
-# ANOSIM - comparing coral communities among time blocks within islands
-ano.df <- data.frame(matrix(ncol = 3, nrow = 0))
-colnames(ano.df) <- c("Island", "Anosim_R", "Significance")
-write.csv(ano.df, "Results/Anosim_results.csv", row.names = F)
+# PERMANOVA - comparing coral communities among time blocks within islands
+perm.df <- data.frame(matrix(ncol = 7, nrow = 0))
+colnames(perm.df) <- c("Island", "factor", "DF", "SumOSqs", "R2", "F", "PrF")
+filename <- "Results/PERMANOVA_results.csv"
+write.csv(perm.df, filename, row.names = F)
 
 for (j in islands){
   xdf <- subset(composition, Island == j)
   com = xdf[,coral_types]
   m_com = as.matrix(com)
-  ano = anosim(m_com, grouping=xdf$group, distance = "bray", permutations = 9999)
-  ano.tmp <- data.frame(j, round(ano$statistic, 4), ano$signif)
-  write.table(ano.tmp, file = "Results/Anosim_results.csv", sep = ",", append = TRUE, quote = FALSE, col.names = FALSE, row.names = FALSE)
+  distMat <- vegdist(m_com, method="bray")
+  x = adonis2(distMat ~ group + Site_Number/LIT_Number, data = xdf)
+  perm.tmp <- data.frame(j, c("group", "site", "site:lit", "residual", "total"), x$Df, x$SumOfSqs, x$R2, x$F, x$`Pr(>F)`)
+  write.table(perm.tmp, file = filename, sep = ",", append = TRUE, quote = FALSE, col.names = FALSE, row.names = FALSE)
 }
 
 # Indicator species analysis by island

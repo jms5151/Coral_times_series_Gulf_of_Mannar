@@ -1,6 +1,9 @@
 # combine covariate data --------------------------------
 rm(list=ls()) #remove previous variable assignments
 
+# load library 
+library(tidyverse)
+
 # load data
 covariates <- read.csv("Data/BleachingImpacts_FinalModelingVariables_05OCT2018.csv", head = T, stringsAsFactors = F)
 chla_max <- read.csv("Data/GoM_chla_mmm_2010_2016.csv", head = T, stringsAsFactors = F)
@@ -21,7 +24,10 @@ covariates <- covariates[c(1:21),c("Island_name",
                                    "Pop10k_decay",
                                    "inorganics")]
 
-colnames(covariates)[1:4] <- c("Island", "Sedimentation_rate", "Fish_density", "Ocean_pollution")
+colnames(covariates)[1:4] <- c("Island", 
+                               "Sedimentation_rate", 
+                               "Fish_density", 
+                               "Ocean_pollution")
 
 # format island names
 covariates$Island <- gsub(" Island", "", covariates$Island)
@@ -39,22 +45,29 @@ bleaching$total_bleached <- rowSums(bleaching[,c("ACB_Bleached",
                                                  "CF_Bleached", 
                                                  "CE_Bleached")])
 
+bleaching$total_ccov <- rowSums(bleaching[,c("total_bleached",
+                                             "ACB_Non.bleached",
+                                             "ACT_Non.bleached",
+                                             "ACD_Non.bleached",
+                                             "ACF_Non.bleached",
+                                             "ACE_Non.bleached",
+                                             "CM_Non.bleached",
+                                             "CS_Non.bleached",
+                                             "CB_Non.bleached",
+                                             "CF_Non.bleached",
+                                             "CE_Non.bleached")])
+
+bleaching$percent_bleached <- bleaching$total_bleached/bleaching$total_ccov
+
 # subset data
-bleaching <- bleaching[,c("LIT", "Station", "Island", "Year", "total_bleached")]
+bleaching <- bleaching[,c("LIT", "Station", "Island", "Year", "percent_bleached")]
 colnames(bleaching)[1:2] <- c("LIT_Number", "Site_Number")
   
-# combine 2010/2016 data and duplicate for 2011/2017 recovery models
-covariates2 <- chla_max %>%
-  left_join(dhw_max, by = c("Island", "Year")) %>%
-  left_join(bleaching, by = c("Island", "Year"))
-
-covariates2_dup <- covariates2
-covariates2_dup$Year <- ifelse(covariates2_dup$Year == 2010, 2011, 2017)
-covariates2 <- rbind(covariates2, covariates2_dup)
-
 # concatenate all covariates
 covariates_final <- covariates %>% 
-  left_join(covariates2, by = "Island")
+  left_join(chla_max, by = c("Island")) %>%
+  left_join(dhw_max, by = c("Island", "Year")) %>%
+  left_join(bleaching, by = c("Island", "Year"))
 
 # save data
 write.csv(covariates_final, "Data/output/concatenated_covariates.csv", row.names=F)

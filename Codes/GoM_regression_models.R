@@ -14,7 +14,6 @@ gom_df <- merge(benthic_cover, covariates, by = c("LIT_Number", "Site_Number", "
 
 # center, scale, and/or transform covariates
 gom_df$Pop10k_decay <- log(gom_df$Pop10k_decay)
-# gom_df[,c("lagged_total_ccov", "lagged_Algae", "Fish_density")] <- lapply(gom_df[,c("lagged_total_ccov", "lagged_Algae", "Fish_density")], log)
 covars <- c("lagged_total_ccov", "lagged_Algae", "percent_bleached"
             , "Pop10k_decay", "MMM_Chla", "inorganics", "Fish_density", "Max_DHW")
 gom_df[, covars] <- lapply(gom_df[, covars], scale)

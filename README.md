@@ -6,5 +6,6 @@ concat_covariates.R : concatenate and format covariates for regression models <b
 format_response_vars.R : format benthic composition data to calculate change in cover of different benthic groups <br>
 
 # Analyses
-GoM_community_analyses.R : conduct community composition analyses (ANOSIM and Indicator Species Analysis) and visualize data  <br>
-GoM_regression_models.R : create beta regression models to identify environmental drivers of change in cover of different benthic groups
+GoM_anovas.R: conduct ANOVAs on overall benthic changes between 2005 and 2017 <br>
+GoM_community_analyses.R : conduct community composition analyses (PERMANOVA and Indicator Species Analysis) and visualize data  <br>
+GoM_regression_models.R : create beta regression models to identify environmental drivers of change in coral and algae cover

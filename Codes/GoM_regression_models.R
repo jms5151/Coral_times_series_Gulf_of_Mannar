@@ -14,7 +14,7 @@ gom_df <- merge(benthic_cover, covariates, by = c("LIT_Number", "Site_Number", "
 
 # center, scale, and/or transform covariates
 gom_df$Pop10k_decay <- log(gom_df$Pop10k_decay)
-covars <- c("lagged_total_ccov", "lagged_Algae", "percent_bleached"
+covars <- c("lagged_total_ccov", "lagged_Algae", "percent_bleached", "water_clarity"
             , "Pop10k_decay", "MMM_Chla", "inorganics", "Fish_density", "Max_DHW")
 gom_df[, covars] <- lapply(gom_df[, covars], scale)
 
@@ -33,6 +33,7 @@ coral_mod <- glmmTMB(delta_ccov_beta ~ percent_bleached
                      # + Pop10k_decay
                      + MMM_Chla
                      # + inorganics
+                     # + water_clarity
                      + (1|Island/Site_Number/LIT_Number),
                      data = benthic_change,
                      beta_family(link = "logit"))

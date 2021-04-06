@@ -8,4 +8,5 @@ format_response_vars.R : format benthic composition data to calculate change in 
 # Analyses
 GoM_anovas.R: conduct ANOVAs on overall benthic changes between 2005 and 2017 <br>
 GoM_community_analyses.R : conduct community composition analyses (PERMANOVA and Indicator Species Analysis) and visualize data  <br>
-GoM_regression_models.R : create beta regression models to identify environmental drivers of change in coral and algae cover
+GoM_regression_models.R : create beta regression models to identify environmental drivers of change in coral and algae cover  <br>
+paired_t-tests.R : compare mean change in coral and algal cover due to two bleaching events

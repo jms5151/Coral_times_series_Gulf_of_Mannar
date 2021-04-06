@@ -42,6 +42,6 @@ compare_dists(cover$delta_algae10)
 compare_dists(cover$delta_algae16)
 
 # test hypothesis that mean change in coral cover differed between the two bleaching events 
-t.test(cover$delta_ccov10, cover$delta_ccov16, paired = TRUE, alternative = "two.sided")
+t.test(cover$delta_ccov16, cover$delta_ccov10, paired = TRUE, alternative = "two.sided")
 # test hypothesis that mean change in algal cover differed between the two bleaching events
-t.test(cover$delta_algae10, cover$delta_algae16, paired = TRUE, alternative = "two.sided")
+t.test(cover$delta_algae16, cover$delta_algae10, paired = TRUE, alternative = "two.sided")
